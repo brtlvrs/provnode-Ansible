@@ -5,4 +5,4 @@ gitea:
   name: "{{_obj.name}}"
   image:
     name: "gitea/gitea"
-    tag: "1.14.2"
+    tag: "latest"
