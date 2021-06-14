@@ -1,0 +1,195 @@
+---
+# role: httpd
+
+#-- 
+- name: display custom variables
+  #-- debug task to display custom created variables
+  tags:
+  - always
+  debug:
+    var: "{{ item }}"
+    verbosity: 1
+  loop:
+  - gv
+  - _obj
+  - samba
+
+- name: "find container: {{samba.container.name}}"
+  tags:
+    - run
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - build
+    - stop
+    - restart
+    - archive
+  docker_container_info:
+    name: "{{samba.container.name}}"
+  register: samba_container
+
+- name: "stop container: {{samba.container.name}}"
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - build
+    - run
+    - stop
+    - restart
+    - archive
+  docker_container:
+    name: "{{samba.container.name}}"
+    state: stopped
+  when: samba_container.exists
+
+- name: "remove container: {{samba.container.name}}"
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - run
+    - build
+    - archive
+  when: samba_container.exists
+  docker_container:
+    name: "{{samba.container.name}}"
+    state: absent
+
+- name: "remove docker image: {{samba.image.name}}:{{samba.image.tag}}" 
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_image
+    - build
+    - run
+    - archive
+  docker_image:
+    name: "{{samba.image.name}}" 
+    tag: "{{samba.image.tag}}" 
+    state: absent
+
+
+- name: check build folder
+  tags:
+    - never
+    - build
+    - run 
+    - archive
+  file:
+    path: "{{samba.image.build.path}}"
+    state: directory
+    mode: '0755'
+
+
+- name: bugfix 'invalid selinux context'
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  file:
+    path:  "{{samba.image.build.path}}/{{item}}"
+    state: touch
+  loop:
+    - dockerfile
+
+- name: templating build content
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  template:
+    src: "{{item}}.j2"
+    dest: "{{samba.image.build.path}}/{{item}}"
+  loop:
+    - dockerfile
+
+- name: "build docker image: {{samba.image.name}}:{{samba.image.tag}}" 
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  docker_image:
+    build:
+      pull: "false"
+      path: "{{samba.image.build.path}}"
+    source: build
+    name: "{{samba.image.name}}" 
+    tag: "{{samba.image.tag}}" 
+    push: false
+
+- name: "run container: {{samba.container.name}} from image:  {{samba.image.name}}:{{samba.image.tag}}" 
+  tags:
+    - never
+    - run_only
+    - run
+    - restart
+  docker_container:
+    name: "{{samba.container.name}}"
+    image: "{{samba.image.name}}:{{samba.image.tag}}"
+    domainname: "{{samba.container.domain}}"
+    hostname: "{{samba.container.name}}"
+    state: started
+    cpu_shares: "{{samba.container.cpu.shares}}"
+    container_default_behavior: no_defaults
+    detach: yes
+    cleanup: yes
+    network_mode: "{{samba.container.network}}"
+    networks:
+    - name: "{{samba.container.network}}"
+    purge_networks: true
+    ports: 
+      - "{{samba.container.ipv4}}:139:139"
+      - "{{samba.container.ipv4}}:445:445"
+    restart_policy: "unless-stopped"
+    volumes:
+      - /data/volumes/samba/vcsa:/vcsa
+    volumes_from:
+      - "data"
+    command: -p -u "vcsa;{{samba.container.users.vcsa.password}}" -s "backup;/shareddata/backup;yes;no;no;vcsa;vcsa;;file-level backup" -s "sources;/shareddata/sources;yes;no;no;vcsa;vcsa;;Install sources" -s "htdocs;/shareddata;yes;no;no;vcsa;vcsa;;http root folder" -s "tftpboot;/shareddata/tftpboot;yes;no;no;vcsa;vcsa;;http root folder"
+    log_driver: syslog
+    log_options:
+      syslog-address: udp://192.168.117.237:514
+      syslog-facility: daemon
+      tag: smb-container
+
+- name: "create archiving location: {{samba.image.archive.path}}"
+  tags:
+    - never
+    - archive 
+    - archive_only
+  file:
+    path: "{{samba.image.archive.path}}"
+    state: directory
+    mode: '0755'
+
+- name: "Archive / export dockerimage to: {{samba.image.archive.path}}/{{_obj.name}}-{{_obj.release}}.tar"
+  tags:
+    - never
+    - archive 
+    - archive_only
+  docker_image:
+    name: "{{_obj.name}}"
+    source: local  
+    tag: "{{_obj.release}}"
+    archive_path: "/tmp/{{_obj.name}}-{{_obj.release}}.tar"
+
+- name: "fetch archive"
+  tags:
+    - never
+    - archive 
+    - archive_only
+  fetch:
+    src: "/tmp/{{_obj.name}}-{{_obj.release}}.tar"
+    dest: "archive/{{_obj.name}}/"
+    flat: yes
+
+- name: help
+  tags:
+    - help
+    - never
+  debug:
+    var:
+      help

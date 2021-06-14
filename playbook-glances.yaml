@@ -1,0 +1,6 @@
+---
+- hosts: provNode
+  gather_facts: yes
+  become: true
+  roles:
+    - glances

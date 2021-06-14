@@ -1,0 +1,78 @@
+---
+- name: display custom variables
+  #-- debug task to display custom created variables
+  tags:
+  - always
+  debug:
+    var: "{{ item }}"
+    verbosity: 1
+  loop:
+  - "gv"
+  - "trfk"
+
+- name: "stop treafik container"
+  tags:
+    - never
+    - stop
+  community.docker.docker_container:
+    name: "traefik"
+    state: stopped
+    container_default_behavior: no_defaults
+
+- name: "remove treafik container"
+  tags:
+    - never
+    - rm
+  community.docker.docker_container:
+    name: "traefik"
+    state: absent    
+    container_default_behavior: no_defaults
+
+- name: template traefik.toml
+  tags:
+    - run
+    - never
+  ansible.builtin.template:
+    src: "{{item}}.j2"
+    dest: "{{gv.projectlocation}}/traefik/{{item}}"
+    force: yes
+  loop:
+    - traefik.toml
+
+- name: "run treafik container"
+  tags:
+    - never
+    - run
+    - run_only
+  community.docker.docker_container:
+    name: "traefik"
+    image: "traefik:v1.7"
+    hostname: "traefik"
+    domainname: "{{gv.domain}}"
+    ports:
+      - 80:80
+      - 443:443
+    labels:
+      "traefik.enable": "true"
+      "traefik.backend": "dashboard"
+      "traefik.frontend.rule": "Host:lab.brtlvrs.lab"
+      "traefik.port": "8080"
+    state: started
+    recreate: yes
+    network_mode: "{{gv.networks.node.name}}"
+    networks: 
+      - name: "{{gv.networks.gitea.name}}"
+      - name: "{{gv.networks.httpd.name}}"
+    container_default_behavior: no_defaults
+    detach: yes
+    cleanup: yes
+    restart_policy: "unless-stopped"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "{{gv.projectlocation}}/traefik/traefik.toml:/traefik.toml"
+      - "{{gv.projectlocation}}/traefik/acme.json:/acme.json"
+ #   command:
+ #     - "--docker"
+    command: "--docker"
+
+

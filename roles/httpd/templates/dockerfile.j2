@@ -1,0 +1,19 @@
+FROM httpd:2.4.41-alpine
+# Dockerfile for mini-httpd
+RUN rm -f /usr/local/apache2/conf/httpd.conf && cd /usr/local/apache2/conf && ln -s /shareddata/docker/httpd/httpd.conf httpd.conf
+
+# setup WEBPROC
+ENV WEBPROC_VERSION 0.4.0
+ENV WEBPROC_ARCH armv7
+ENV WEBPROC_URL https://github.com/jpillora/webproc/releases/download/v${WEBPROC_VERSION}/webproc_${WEBPROC_VERSION}_linux_${WEBPROC_ARCH}.gz
+RUN apk update \
+	&& apk --no-cache add  --virtual .build-deps curl
+RUN curl -sL ${WEBPROC_URL} |gzip -d - > /usr/local/bin/webproc 
+RUN chmod +x /usr/local/bin/webproc
+EXPOSE 80 8080 443
+
+# define healthcheck
+HEALTHCHECK --interval=15m --timeout=30s --start-period=5s --retries=3 CMD httpd -v || exit 1
+
+#run!
+ENTRYPOINT ["webproc","-p","8080","-m","500","-c","/shareddata/docker/httpd/httpd.conf","--","httpd-foreground","--no-daemon"]

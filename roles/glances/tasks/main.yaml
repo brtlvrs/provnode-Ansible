@@ -1,0 +1,37 @@
+
+# website: https://glances.readthedocs.io/en/stable/index.html
+
+- name: "stop container"
+  tags:
+  - never
+  - stop
+  - restart
+  community.docker.docker_container:
+    name: "glances"
+    state: stopped
+  ignore_errors: true
+
+- name: "run container" 
+  tags:
+    - never
+    - run_only
+    - restart
+    - run
+  community.docker.docker_container:
+    name: "glances"
+    container_default_behavior: no_defaults
+    detach: "yes"
+    image: "docker.io/nicolargo/glances"
+    hostname: "glances.lab.brtlvrs.lab"
+    domainname: "brtlvrs.lab"
+    state: started
+    recreate: yes
+    cpu_shares: "512"
+    cleanup: yes
+    network_mode: "host"
+    env:
+      GLANCES_OPT: "-w -0 --hide-kernel-threads --fs-free-space --disable-check-update"
+    restart_policy: "unless-stopped"
+    volumes: 
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    pid_mode: "host"

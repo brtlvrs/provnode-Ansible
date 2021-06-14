@@ -1,0 +1,6 @@
+all:
+  hosts:
+    provNode:
+      ansible_connection: ssh
+      ansible_host: 10.117.21.1
+      ansible_user: root

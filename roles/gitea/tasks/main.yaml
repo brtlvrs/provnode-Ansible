@@ -1,0 +1,62 @@
+---
+- name: display custom variables
+  #-- debug task to display custom created variables
+  tags:
+  - always
+  debug:
+    var: "{{ item }}"
+    verbosity: 1
+  loop:
+  - "gv"
+  - "_obj"
+  - "gitea"
+
+- name: "stop {{_obj.name}} container"
+  tags:
+    - never
+    - stop
+  community.docker.docker_container:
+    name: "{{_obj.name}}"
+    state: stopped
+    container_default_behavior: no_defaults
+
+- name: "remove {{_obj.name}} container"
+  tags:
+    - never
+    - rm
+  community.docker.docker_container:
+    name: "{{_obj.name}}"
+    state: absent   
+    container_default_behavior: no_defaults
+
+- name: "run {{_obj.name}} container"
+  tags:
+    - never
+    - run
+    - run_only
+  community.docker.docker_container:
+    name: "{{_obj.name}}"
+    image: "{{gitea.image.name}}:{{gitea.image.tag}}"
+    hostname: "{{_obj.name}}"
+    domainname: "{{gv.domain}}"
+    labels:
+      "traefik.enabled": "true"
+      "traefik.backend": "gitea"
+      "traefik.frontend.rule": "Host:lab.brtlvrs.lab; PathPrefixStrip:/git"
+      "traefik.docker.network": "{{gv.networks.gitea.name}}"
+      "traefik.port": "3000"
+    env:
+      USER_UID: "1000"
+      USER_GID: "1000"
+    state: started
+    recreate: yes
+    network_mode: "{{gv.networks.gitea.name}}"
+    networks: 
+      - name: "{{gv.networks.gitea.name}}"
+    purge_networks: yes
+    container_default_behavior: no_defaults
+    detach: yes
+    cleanup: yes
+    restart_policy: "unless-stopped"
+    volumes:
+      - "{{gv.projectlocation}}/gitea/data/:/data/"

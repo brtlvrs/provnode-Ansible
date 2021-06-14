@@ -1,0 +1,165 @@
+---
+# role: httpd
+
+#-- 
+- name: display custom variables
+  #-- debug task to display custom created variables
+  tags:
+  - always
+  debug:
+    var: "{{ item }}"
+    verbosity: 1
+  loop:
+  - _obj
+  - gv
+  - httpd
+
+- name: "find container: {{httpd.container.name}}"
+  #-- Check if Folding@Home container exists
+  tags:
+    - run
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - build
+    - stop
+    - archive
+  community.docker.docker_container_info:
+    name: "{{httpd.container.name}}"
+  register: httpd_container
+
+- name: "stop container: {{httpd.container.name}}"
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - build
+    - run
+    - stop
+    - archive
+  community.docker.docker_container:
+    name: "{{httpd.container.name}}"
+    state: stopped
+  when: httpd_container.exists
+
+- name: "remove container: {{httpd.container.name}}"
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - run
+    - build
+    - archive
+  when: httpd_container.exists
+  community.docker.docker_container:
+    name: "{{httpd.container.name}}"
+    state: absent
+
+- name: "remove docker image: {{httpd.image.name}}:{{httpd.image.tag}}" 
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_image
+    - build
+    - run
+    - archive
+  community.docker.docker_image:
+    name: "{{httpd.image.name}}" 
+    tag: "{{httpd.image.tag}}" 
+    state: absent
+
+
+- name: check build folder
+  tags:
+    - never
+    - build
+    - run 
+    - archive
+  file:
+    path: "{{httpd.image.build.path}}"
+    state: directory
+    mode: '0755'
+
+
+- name: bugfix 'invalid selinux context'
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  file:
+    path:  "{{httpd.image.build.path}}/{{item}}"
+    state: touch
+  loop:
+    - dockerfile
+
+- name: templating build content
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  template:
+    src: "{{item}}.j2"
+    dest: "{{httpd.image.build.path}}/{{item}}"
+  loop:
+    - dockerfile
+
+- name: "build docker image: {{httpd.image.name}}:{{httpd.image.tag}}" 
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  community.docker.docker_image:
+    build:
+      pull: "false"
+      path: "{{httpd.image.build.path}}"
+    source: build
+    name: "{{httpd.image.name}}" 
+    tag: "{{httpd.image.tag}}" 
+    push: false
+
+
+ 
+
+- name: "run container: {{httpd.container.name}} from image:  {{httpd.image.name}}:{{httpd.image.tag}}" 
+  tags:
+    - never
+    - run_only
+    - run
+  community.docker.docker_container:
+    name: "{{httpd.container.name}}"
+    image: "{{httpd.image.name}}:{{httpd.image.tag}}"
+    hostname: "{{httpd.container.name}}"
+    domainname: "{{httpd.container.domain}}"
+    state: started
+    cpu_shares: "{{httpd.container.cpu.shares}}"
+    container_default_behavior: no_defaults
+    detach: yes
+    cleanup: yes
+    network_mode: "{{httpd.container.network}}"
+    networks:
+    - name: "{{httpd.container.network}}"
+    purge_networks: true
+    restart_policy: "unless-stopped"
+    ports:
+      - "11702:8080"
+      - "80:80" 
+      - "443:443"
+    volumes: 
+      - "/data/volumes/ssl/:/etc/apache2/ssl/"
+    volumes_from:
+      - "data"
+    log_driver: syslog
+    log_options:
+      syslog-address: udp://192.168.117.237:514
+      syslog-facility: daemon
+      tag: httpd-container
+
+- name: help
+  tags:
+    - help
+    - never
+  debug:
+    var:
+      help

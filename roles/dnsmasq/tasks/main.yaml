@@ -1,0 +1,181 @@
+---
+# role: DNS
+
+#-- 
+- name: display custom variables
+  #-- debug task to display custom created variables
+  tags:
+  - always
+  debug:
+    var: "{{ item }}"
+    verbosity: 1
+  loop:
+  - "gv"
+  - "_obj"
+  - dnsmasq
+
+- name: "find container: {{dnsmasq.container.name}}"
+  #-- Check if Folding@Home container exists
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - run
+    - build
+    - stop
+    - archive
+    - restart
+  docker_container_info:
+    name: "{{dnsmasq.container.name}}"
+  register: dnsmasq_container
+
+- name: "stop container: {{dnsmasq.container.name}}"
+  tags:
+    - never #only run task when tags are explicity given 
+    - stop
+    - restart
+  docker_container:
+    name: "{{dnsmasq.container.name}}"
+    state: stopped
+  when: dnsmasq_container.exists
+
+- name: "remove container: {{dnsmasq.container.name}}"
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_container
+    - rm_image
+    - run
+    - build
+    - archive
+  when: dnsmasq_container.exists
+  docker_container:
+    name: "{{dnsmasq.container.name}}"
+    state: absent
+
+- name: "remove docker image: {{dnsmasq.image.name}}:{{dnsmasq.image.tag}}" 
+  tags:
+    - never #only run task when tags are explicity given 
+    - rm_image
+    - build
+    - run
+    - archive
+  community.docker.docker_image:
+    name: "{{dnsmasq.image.name}}" 
+    tag: "{{dnsmasq.image.tag}}" 
+    state: absent
+
+
+- name: check build folder
+  tags:
+    - never
+    - build
+    - run 
+    - archive
+  file:
+    path: "{{dnsmasq.image.build.path}}"
+    state: directory
+    mode: '0755'
+
+
+- name: bugfix 'invalid selinux context'
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  file:
+    path:  "{{dnsmasq.image.build.path}}/{{item}}"
+    state: touch
+  loop:
+    - dockerfile
+
+- name: templating build content
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  ansible.builtin.template:
+    src: "{{item}}.j2"
+    dest: "{{dnsmasq.image.build.path}}/{{item}}"
+  loop:
+    - dockerfile
+
+- name: "build docker image: {{dnsmasq.image.name}}:{{dnsmasq.image.tag}}" 
+  tags:
+    - build
+    - run
+    - archive
+    - never
+  community.docker.docker_image:
+    build:
+      pull: "false"
+      path: "{{dnsmasq.image.build.path}}"
+    source: build
+    name: "{{dnsmasq.image.name}}" 
+    tag: "{{dnsmasq.image.tag}}" 
+    push: false
+
+- name: templating run content
+  tags:
+    - run
+    - run_only
+    - never
+  ansible.builtin.template:
+    force: yes
+    src: "{{item}}.j2"
+    dest: "{{dnsmasq.container.mountpath}}/{{item}}"
+  loop:
+    - "dnsmasq.leases"
+
+- name: git clone config
+  tags:
+    - never
+    - git
+    - run_only
+    - run
+  ansible.builtin.git:
+    repo: http://lab.brtlvrs.lab/git/provnode/dnsmasq.git
+    dest: "{{gv.projectlocation}}/repos/{{_obj.name}}"
+    accept_hostkey: yes
+    version: master
+    force: yes
+
+
+- name: "run container: {{dnsmasq.container.name}} from image:  {{dnsmasq.image.name}}:{{dnsmasq.image.tag}}" 
+  tags:
+    - never
+    - run_only
+    - run
+    - restart
+  community.docker.docker_container:
+    name: "{{dnsmasq.container.name}}"
+    image: "{{dnsmasq.image.name}}:{{dnsmasq.image.tag}}"
+    hostname: "{{dnsmasq.container.name}}"
+    domainname: "{{dnsmasq.container.domain}}"
+    state: started
+    recreate: yes
+    #cpu_shares: "{{dnsmasq.container.cpu.shares}}"
+    capabilities: 
+      - net_admin
+    network_mode: "host"
+    container_default_behavior: no_defaults
+    detach: yes
+    cleanup: yes
+    restart_policy: "unless-stopped"
+    volumes: 
+   #   - "dnsmasqconf:/etc/dnsmasq"
+      - "{{gv.projectlocation}}/repos/{{_obj.name}}/dnsmasq.conf:/etc/dnsmasq/dnsmasq.conf"
+      - "{{gv.projectlocation}}/repos/tftp/:/var/lib/tftp/"
+      - "{{dnsmasq.container.mountpath}}/dnsmasq.leases:/var/lib/misc/dnsmasq.leases"
+ #   volumes_from:
+ #     - "data"
+
+
+- name: help
+  tags:
+    - help
+    - never
+  debug:
+    var:
+      help

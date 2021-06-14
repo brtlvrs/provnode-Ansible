@@ -1,0 +1,24 @@
+---
+- name: display custom variables
+  #-- debug task to display custom created variables
+  tags:
+  - always
+  debug:
+    var: "{{ item }}"
+    verbosity: 1
+  loop:
+  - "gv"
+
+- name: "{{item}} network"
+  tags:
+    - never
+    - run
+    - run_only
+  community.docker.docker_network:
+    name: "{{item}}"  
+  loop:
+    - "{{gv.networks.node.name}}"
+    - "{{gv.networks.gitea.name}}"
+    - "{{gv.networks.httpd.name}}"
+
+

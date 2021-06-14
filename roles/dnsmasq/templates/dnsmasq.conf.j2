@@ -1,0 +1,113 @@
+#--- general
+domain-needed
+bogus-priv
+log-queries
+log-dhcp
+no-resolv
+no-hosts
+no-poll
+dns-loop-detect
+
+#-- interfaces
+#  using br0 because rpi has the wifi and eth bridged
+interface=br0
+
+#--- TFTP
+enable-tftp
+tftp-root=/var/lib/tftp/
+
+#--- DHCP
+dhcp-authoritative
+dhcp-leasefile=/var/lib/misc/dnsmasq.leases
+dhcp-sequential-ip
+
+
+#-- PXE boot clients
+# inspect the vendor class string and tag BIOS client
+#           Type   Architecture Name
+#           ----   -----------------
+#             0    Intel x86PC
+#             1    NEC/PC98
+#             2    EFI Itanium
+#             3    DEC Alpha
+#             4    Arc x86
+#             5    Intel Lean Client
+#             6    EFI IA32
+#             7    EFI BC (EFI Byte Code)
+#             8    EFI Xscale
+#             9    EFI x86-64
+#			 11	   ARM
+dhcp-vendorclass=aarch64,PXEClient:Arch:00011:UNDI:003000
+dhcp-vendorclass=BIOS,PXEClient:Arch:00000
+dhcp-vendorclass=EFI-IA32,PXEClient:Arch:00006
+dhcp-vendorclass=EFI-BC,PXEClient:Arch:00007
+dhcp-vendorclass=EFI-x86-64,PXEClient:Arch:00009
+
+# select PXE boot files based on vendorclass tag
+dhcp-boot=tag:!ipxe,tag:aarch64,esxi-arm/EFI/BOOT/BOOTAA64.EFI,10.117.21.1
+dhcp-boot=tag:!ipxe,tag:BIOS,undionly.kpxe,10.117.21.1
+dhcp-boot=tag:!ipxe,tag:EFI-IA32,ipxe.efi,10.117.21.1
+dhcp-boot=tag:!ipxe,tag:EFI-BC,snp.efi,10.117.21.1
+dhcp-boot=tag:!ipxe,tag:EFI-x86-64,ipxe.efi,10.117.21.1
+
+
+# Tag dhcp request from iPXE and set iPXE boot menu
+dhcp-match=set:ipxe,175
+dhcp-boot=tag:ipxe,"http://10.117.21.1/ipxe/boot.ipxe"
+
+# default dhcp range, ipxe will show not welcome message
+dhcp-range=tag:ipxe,tag:mgt,10.117.21.101,10.117.21.199,255.255.255.0,8h
+dhcp-range=set:goaway,10.117.21.201,10.117.21.219,255.255.255.0,15m
+
+# DHCP options
+#  1  netmask
+#  3  router / gateway
+#  6  dns-server
+#  12 hostname
+#  15 domain-name
+#  42 NTP server
+#  66 TFTP server
+
+#-- dhcp options tag:mgt
+dhcp-option=tag:mgt,3,10.117.21.250
+dhcp-option=tag:mgt,6,10.117.21.250
+dhcp-option=tag:mgt,15,brtlvrs.lab
+#dhcp-option=tag:known,28,192.168.1.255
+dhcp-option=tag:mgt,42,10.117.21.250
+
+#-- dhcp options tag:rpi
+dhcp-option=tag:rpi,3,10.117.21.250
+dhcp-option=tag:rpi,6,10.117.21.250
+dhcp-option=tag:rpi,15,brtlvrs.lab
+#dhcp-option=tag:known,28,192.168.1.255
+dhcp-option=tag:rpi,42,10.117.21.250
+
+
+#-- default dhcp-options (default config)
+# domain name, ipxe boot will use this to shutdown the client
+dhcp-option=15,goaway
+dhcp-option=6,10.117.21.250
+
+
+#-- DHCP static IPs
+
+#-- DNS (host records are set in the host sections below)
+server=10.117.21.250
+domain=lab.brtlvrs.lab,10.117.21.0/24,local
+auth-server=lab.brtlvrs.lab
+auth-zone=lab.brtlvrs.lab,10.117.21.0/24,
+auth-ttl=600
+auth-soa=12345678,admin.lab.brtlvrs.lab
+# The more DNS queries you have from clients the larger you want this
+cache-size=256
+
+#DNS records
+host-record=provnode.lab.brtlvrs.lab,10.117.21.1
+host-record=brtlvrs.lab,10.117.21.1
+
+# PTR & Reverse
+host-record=21.117.10.in-addr.arpa,10.117.21.1
+
+
+# CNAME
+cname=git.lab.brtlvrs.lab,provnode.lab.brtlvrs.lab

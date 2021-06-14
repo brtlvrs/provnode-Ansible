@@ -1,0 +1,30 @@
+---
+_obj:
+  name: "dnsmasq"
+  release: "0.1"
+
+dnsmasq:
+  image:
+    name: "{{_obj.name}}"
+    tag: "{{_obj.release}}"
+    build:
+      path: "{{gv.image.build.path}}/{{_obj.name}}"
+  container:
+    domain: "{{gv.domain}}"
+    name: "{{_obj.name}}"
+    ipv4: "{{gv.ipv4}}"
+    mountpath: "{{gv.projectlocation}}/{{_obj.name}}"
+
+help:
+    tags_explenation:
+      rm_container : remove docker container
+      rm_image     : remove docker container and image
+      build        : (re)build image, remove container, remove image then (re)build image
+      run          : (re)build container, remove container, run container (data volume is not removed)
+#      clean_run    : remove container with its volume and run container
+      run_only     : don't rebuild image, only (re)run container
+      restart      : Stop and start container
+      stop         : stop running container
+      archive      : archive image to .tar, first (re)build image, will not work if container is present
+      archive_only : archive image to .tar
+

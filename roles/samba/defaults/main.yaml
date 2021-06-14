@@ -1,0 +1,46 @@
+---
+_obj:
+  name: samba
+  release: "0.1"
+
+samba:
+  image:
+    name: "{{_obj.name}}"
+    tag: "{{_obj.release}}"
+    build:
+      path: "{{gv.image.build.path}}/{{_obj.name}}"
+    archive: 
+      path: "{{gv.image.archive.path}}/{{_obj.name}}"
+  container:
+    name: "{{_obj.name}}"
+    ipv4: "{{gv.container.ipv4}}"
+    domain: "{{gv.container.domain}}"
+    network: "{{gv.container.network}}"
+    users:
+      vcsa:
+        name: "vcsa"
+        password: !vault |
+          $ANSIBLE_VAULT;1.1;AES256
+          64616462386466613036643862663336386461646662393462323436636261616562313365663965
+          3438336565303965376431363461316632306437316135630a363435316632626535386339363366
+          64633036313866363239616633386163313861646435626436353438346465356161613666653265
+          3162393964653030300a353263383062353237656165303362633635636163633930386636386538
+          39333165353732343565636639323539376633383135316238333531653565633133
+        homedir: "/data/backup"
+    cpu:
+      shares: "1024" # default is 1024
+
+
+
+help:
+    tags_explenation:
+      rm_container : remove docker container
+      rm_image     : remove docker container and image
+      build        : (re)build image, remove container, remove image then (re)build image
+      run          : (re)build container, remove container, run container (data volume is not removed)
+#      clean_run    : remove container with its volume and run container
+      run_only     : don't rebuild image, only (re)run container
+      restart      : Stop and start container
+      stop         : stop running container
+      archive      : archive image to .tar, first (re)build image, will not work if container is present
+      archive_only : archive image to .tar

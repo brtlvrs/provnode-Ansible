@@ -1,0 +1,46 @@
+
+- name: "stop postgres container"
+  tags:
+    - never
+    - stop
+  community.docker.docker_container:
+    name: "postgres"
+    state: stopped
+    container_default_behavior: no_defaults
+
+- name: "remove postgres container"
+  tags:
+    - never
+    - rm
+  community.docker.docker_container:
+    name: "postgres"
+    state: absent   
+    container_default_behavior: no_defaults
+
+- name: "run postgressql container"
+  tags:
+    - never
+    - run
+    - run_only
+  community.docker.docker_container:
+    name: "postgres"
+    image: "postgres:9.6"
+    hostname: "postgres"
+    domainname: "{{gv.domain}}"
+    labels:
+      "traefik.enable": "false"
+    env:
+      POSTGRES_USER: "{{pg.gitea.user}}"
+      POSTGRES_PASSWORD: "{{pg.gitea.password}}"
+      POSTGRES_DB: "{{pg.gitea.db}}"
+    state: started
+    recreate: yes
+    network_mode: "{{gv.networks.gitea.name}}"
+    networks: 
+      - name: "{{gv.networks.gitea.name}}"
+    container_default_behavior: no_defaults
+    detach: yes
+    cleanup: yes
+    restart_policy: "unless-stopped"
+    volumes:
+      - "{{gv.projectlocation}}/postgress/data/:/var/lib/postgresql/data/"
