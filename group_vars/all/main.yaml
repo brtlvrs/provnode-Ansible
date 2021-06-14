@@ -2,6 +2,8 @@ gv:
   projectlocation: "/project"
   ipv4: "{{ansible_eth0.ipv4.address}}"
   domain: "lab.brtlvrs.lab"
+  shareddata:
+    name: "shareddata"
   networks:
     gitea:
       name: "gitea"

@@ -4,4 +4,4 @@ _obj:
 sd:
   image:
     name: "busybox"
-    tag: 
+    tag: latest
