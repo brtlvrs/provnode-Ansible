@@ -29,6 +29,8 @@
     cpu_shares: "512"
     cleanup: yes
     network_mode: "host"
+    labels:
+      "traefik.enabled": "false"
     env:
       GLANCES_OPT: "-w -0 --hide-kernel-threads --fs-free-space --disable-check-update"
     restart_policy: "unless-stopped"

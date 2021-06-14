@@ -7,11 +7,10 @@ httpd:
   image:
     name: "{{_obj.name}}"
     tag: "{{_obj.release}}"
+    build:
+      path: "/tmp/{{_obj.name}}"
   container:
     name: "{{_obj.name}}"
-    ipv4: "{{gv.container.ipv4}}"
-    domain: "{{gv.container.domain}}"
-    network: "{{gv.container.network}}"
     cpu:
       shares: "1024" # default is 1024
 

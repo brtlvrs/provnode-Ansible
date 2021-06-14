@@ -43,7 +43,7 @@
       "traefik.enabled": "true"
       "traefik.backend": "gitea"
       "traefik.frontend.rule": "Host:lab.brtlvrs.lab; PathPrefixStrip:/git"
-      "traefik.docker.network": "{{gv.networks.gitea.name}}"
+      "traefik.docker.network": "{{gv.networks.proxy.name}}"
       "traefik.port": "3000"
     env:
       USER_UID: "1000"
@@ -53,6 +53,7 @@
     network_mode: "{{gv.networks.gitea.name}}"
     networks: 
       - name: "{{gv.networks.gitea.name}}"
+      - name: "{{gv.networks.proxy.name}}"
     purge_networks: yes
     container_default_behavior: no_defaults
     detach: yes

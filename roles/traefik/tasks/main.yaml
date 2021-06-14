@@ -55,14 +55,13 @@
     labels:
       "traefik.enable": "true"
       "traefik.backend": "dashboard"
-      "traefik.frontend.rule": "Host:lab.brtlvrs.lab"
+      "traefik.frontend.rule": "Host:lab.brtlvrs.lab; PathPrefixStrip:/traefik"
       "traefik.port": "8080"
     state: started
     recreate: yes
-    network_mode: "{{gv.networks.node.name}}"
+    network_mode: "{{gv.networks.proxy.name}}"
     networks: 
-      - name: "{{gv.networks.gitea.name}}"
-      - name: "{{gv.networks.httpd.name}}"
+      - name: "{{gv.networks.proxy.name}}"
     container_default_behavior: no_defaults
     detach: yes
     cleanup: yes

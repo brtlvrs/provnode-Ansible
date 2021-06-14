@@ -162,6 +162,8 @@
     container_default_behavior: no_defaults
     detach: yes
     cleanup: yes
+    labels:
+      "traefik.enabled": "false"
     restart_policy: "unless-stopped"
     volumes: 
    #   - "dnsmasqconf:/etc/dnsmasq"

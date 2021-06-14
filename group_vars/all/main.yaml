@@ -5,6 +5,8 @@ gv:
   shareddata:
     name: "shareddata"
   networks:
+    proxy:
+      name: "proxy"
     gitea:
       name: "gitea"
     httpd:

@@ -119,10 +119,7 @@
     tag: "{{httpd.image.tag}}" 
     push: false
 
-
- 
-
-- name: "run container: {{httpd.container.name}} from image:  {{httpd.image.name}}:{{httpd.image.tag}}" 
+- name: "run container" 
   tags:
     - never
     - run_only
@@ -130,31 +127,31 @@
   community.docker.docker_container:
     name: "{{httpd.container.name}}"
     image: "{{httpd.image.name}}:{{httpd.image.tag}}"
-    hostname: "{{httpd.container.name}}"
-    domainname: "{{httpd.container.domain}}"
+    hostname: "{{_obj.name}}"
+    domainname: "{{gv.domain}}"
     state: started
-    cpu_shares: "{{httpd.container.cpu.shares}}"
+    recreate: yes
     container_default_behavior: no_defaults
     detach: yes
     cleanup: yes
-    network_mode: "{{httpd.container.network}}"
+    network_mode: "{{gv.networks.proxy.name}}"
     networks:
-    - name: "{{httpd.container.network}}"
+    - name: "{{gv.networks.proxy.name}}"
     purge_networks: true
     restart_policy: "unless-stopped"
     ports:
-      - "11702:8080"
-      - "80:80" 
-      - "443:443"
-    volumes: 
-      - "/data/volumes/ssl/:/etc/apache2/ssl/"
+      - "10.117.21.1:11702:8080"
+    labels:
+      "traefik.enabled": "true"
+      "traefik.backend": "apache"
+      "traefik.frontend.rule": "Host:lab.brtlvrs.lab"
+      "traefik.docker.network": "{{gv.networks.proxy.name}}"
+      "traefik.port": "80"   
+    volumes:
+      - "{{gv.projectlocation}}/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf"
     volumes_from:
-      - "data"
-    log_driver: syslog
-    log_options:
-      syslog-address: udp://192.168.117.237:514
-      syslog-facility: daemon
-      tag: httpd-container
+      - "{{gv.shareddata.name}}"
+
 
 - name: help
   tags:
