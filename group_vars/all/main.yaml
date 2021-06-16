@@ -9,10 +9,6 @@ gv:
       name: "proxy"
     gitea:
       name: "gitea"
-    httpd:
-      name: "httpd"
-    node:
-      name: "httpd"
   image:
     build:
       path: "/tmp/" # "{{playbook_dir}}/build" # base path to copy files to for building image

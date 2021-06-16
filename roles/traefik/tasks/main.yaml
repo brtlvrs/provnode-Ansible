@@ -46,32 +46,41 @@
     - run_only
   community.docker.docker_container:
     name: "traefik"
-    image: "traefik:v1.7"
+    image: "traefik:v2.4"
     hostname: "traefik"
     domainname: "{{gv.domain}}"
     ports:
       - 80:80
       - 443:443
-    labels:
-      "traefik.enable": "true"
-      "traefik.backend": "dashboard"
-      "traefik.frontend.rule": "Host:lab.brtlvrs.lab; PathPrefixStrip:/traefik"
-      "traefik.port": "8080"
     state: started
-    recreate: yes
+    recreate: yes    
     network_mode: "{{gv.networks.proxy.name}}"
     networks: 
       - name: "{{gv.networks.proxy.name}}"
     container_default_behavior: no_defaults
     detach: yes
     cleanup: yes
+    labels:
+      "traefik.enable" : "true"
+      "traefik.http.routers.traefik.entrypoints" : "web"
+      "traefik.http.routers.traefik.rule" : "Host(`lab.brtlvrs.lab`)"
+      "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme" : "https"
+      "traefik.http.routers.traefik.middlewares" : "traefik-https-redirect"
+      "traefik.http.routers.traefik-secure.entrypoints" : "websecure"
+      "traefik.http.routers.traefik-secure.rule" : "Host(`lab.brtlvrs.lab`)"
+      "traefik.http.routers.traefik-secure.tls" : "true"
+      "traefik.http.routers.traefik-secure.tls.certresolver" : "letsencrypt"
+      "traefik.http.routers.traefik-secure.service" : "api@internal"
+  #    "traefik.http.routers.traefik-secure.middlewares" : "traefik-auth"
     restart_policy: "unless-stopped"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - "{{gv.projectlocation}}/traefik/traefik.toml:/traefik.toml"
-      - "{{gv.projectlocation}}/traefik/acme.json:/acme.json"
- #   command:
- #     - "--docker"
-    command: "--docker"
+      - "{{gv.projectlocation}}/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro"
+      - "{{gv.projectlocation}}/traefik/dynamic/:/etc/traefik/dynamic/"
+      - "{{gv.projectlocation}}/traefik/log/:/log/"
+      - "{{gv.projectlocation}}/traefik/acme.json:/etc/traefik/acme.json"
+      - "{{gv.projectlocation}}/traefik/default.pem:/certs/default.pem:ro"
+      - "{{gv.projectlocation}}/traefik/default.key:/run/secrets/default.key:ro"
+
 
 

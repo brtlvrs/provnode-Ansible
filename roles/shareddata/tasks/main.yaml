@@ -27,6 +27,7 @@
     image: "{{sd.image.name}}:{{sd.image.tag}}"
     hostname: "{{_obj.name}}"
     domainname: "{{gv.domain}}"
+    container_default_behavior: "no_defaults"
     labels:
       "traefik.enable": "false"
     state: started

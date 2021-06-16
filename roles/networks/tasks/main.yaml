@@ -17,9 +17,7 @@
   community.docker.docker_network:
     name: "{{item}}"  
   loop:
-    - "{{gv.networks.node.name}}"
     - "{{gv.networks.gitea.name}}"
-    - "{{gv.networks.httpd.name}}"
     - "{{gv.networks.proxy.name}}"
 
 
