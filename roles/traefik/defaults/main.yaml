@@ -5,4 +5,4 @@ trfk:
   dash:
     user: admin
     password: $$apr1$$FSOCbt.a$$DNWa8lywi63850BCL1VlI.
-    #-- generate password hash openssl passwd -apr1 | sed -E "s:[\$]:\$\$:g
+    #-- generate password hash openssl passwd -apr1 | sed -E "s:[\$]:\$\$:g"

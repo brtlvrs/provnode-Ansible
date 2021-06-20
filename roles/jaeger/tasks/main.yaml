@@ -9,7 +9,7 @@
   loop:
   - "gv"
   - "_obj"
-  - "gitea"
+  - "jaeger"
 
 - name: "stop {{_obj.name}} container"
   tags:
@@ -36,28 +36,28 @@
     - run_only
   community.docker.docker_container:
     name: "{{_obj.name}}"
-    image: "{{gitea.image.name}}:{{gitea.image.tag}}"
+    image: "{{jaeger.image.name}}:{{jaeger.image.tag}}"
     hostname: "{{_obj.name}}"
     domainname: "{{gv.domain}}"
     labels:
       "traefik.enable" : "true"
-      "traefik.docker.network": "proxy"    
-      "traefik.http.routers.rtr_gitea.entrypoints": "web"
-      "traefik.http.routers.rtr_gitea.rule": "Host(`git.lab.brtlvrs.lab`)"
-      "traefik.http.routers.rtr_gitea.service": "svc_gitea"
-      "traefik.http.services.svc_gitea.loadbalancer.server.port": "3000"
-      USER_UID: "1000"
-      USER_GID: "1000"
+      "traefik.http.services.jaeger.loadbalancer.server.port" : "16686"
+      "traefik.http.routers.jaeger.entrypoints": "websecure"
+      "traefik.http.routers.jaeger.rule": "Host(`jaeger.lab.brtlvrs.lab`)"
+      "traefik.http.routers.jaeger.service": "jaeger"
+      "traefik.docker.network": "proxy"
+    ports:
+      - 9411:9411
+      - 16686:16686
+    env:
+      COLLECTOR_ZIPKIN_HTTP_PORT: "9411"
     state: started
     recreate: yes
-    network_mode: "{{gv.networks.gitea.name}}"
+    network_mode: "{{gv.networks.proxy.name}}"
     networks: 
-      - name: "{{gv.networks.gitea.name}}"
       - name: "{{gv.networks.proxy.name}}"
     purge_networks: yes
     container_default_behavior: no_defaults
     detach: yes
     cleanup: yes
     restart_policy: "unless-stopped"
-    volumes:
-      - "{{gv.projectlocation}}/gitea/data/:/data/"

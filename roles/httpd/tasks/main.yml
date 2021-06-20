@@ -139,14 +139,22 @@
     - name: "{{gv.networks.proxy.name}}"
     purge_networks: true
     restart_policy: "unless-stopped"
-    ports:
-      - "10.117.21.1:11702:8080"
     labels:
-      "traefik.enabled": "true"
-      "traefik.backend": "apache"
-      "traefik.frontend.rule": "Host:lab.brtlvrs.lab"
-      "traefik.docker.network": "{{gv.networks.proxy.name}}"
-      "traefik.port": "80"   
+      "traefik.enable" : "true"
+      "traefik.docker.network": "proxy"    
+      #-- http site
+      "traefik.http.routers.rtr_apache.entrypoints": "web"
+      "traefik.http.routers.rtr_apache.rule": "Host(`lab.brtlvrs.lab`)"
+      "traefik.http.routers.rtr_apache.service": "svc_apache"
+      "traefik.http.services.svc_apache.loadbalancer.server.port": "80" 
+      "traefik.http.routers.rtr_apache_conf.entrypoints": "web"
+      #-- webproc site
+      "traefik.http.routers.rtr_apache_conf.rule": "Host(`lab.brtlvrs.lab`) && path(`/mgt`)"
+      "traefik.http.routers.rtr_apache_conf.service": "svc_apache_conf"
+      "traefik.http.routers.rtr_apache_conf.middlewares": "mw_apache_conf_01"
+      "traefik.http.middlewares.mw_apache_conf_01.stripprefix.prefixes":  "/mgt"
+      "traefik.http.services.svc_apache_conf.loadbalancer.server.port": "8080"
+
     volumes:
       - "{{gv.projectlocation}}/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf"
     volumes_from:

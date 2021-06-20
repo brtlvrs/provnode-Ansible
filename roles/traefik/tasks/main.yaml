@@ -52,6 +52,7 @@
     ports:
       - 80:80
       - 443:443
+      - 8080:8080
     state: started
     recreate: yes    
     network_mode: "{{gv.networks.proxy.name}}"
@@ -62,16 +63,14 @@
     cleanup: yes
     labels:
       "traefik.enable" : "true"
-      "traefik.http.routers.traefik.entrypoints" : "web"
-      "traefik.http.routers.traefik.rule" : "Host(`lab.brtlvrs.lab`)"
-      "traefik.http.middlewares.traefik-https-redirect.redirectscheme.scheme" : "https"
-      "traefik.http.routers.traefik.middlewares" : "traefik-https-redirect"
-      "traefik.http.routers.traefik-secure.entrypoints" : "websecure"
-      "traefik.http.routers.traefik-secure.rule" : "Host(`lab.brtlvrs.lab`)"
-      "traefik.http.routers.traefik-secure.tls" : "true"
-      "traefik.http.routers.traefik-secure.tls.certresolver" : "letsencrypt"
-      "traefik.http.routers.traefik-secure.service" : "api@internal"
-  #    "traefik.http.routers.traefik-secure.middlewares" : "traefik-auth"
+      # dashboard
+      "traefik.http.routers.rtr_traefik.entrypoints" : "web"
+      "traefik.http.routers.rtr_traefik.rule" : "Host(`traefik.lab.brtlvrs.lab`)"
+      "traefik.http.routers.rtr_traefik.service" : "api@internal"
+ #     "traefik.http.routers.traefik-secure.tls" : "true"
+#      "traefik.http.routers.traefik-secure.middlewares" : "traefik-auth"
+#      "traefik.http.middlewares.traefik-auth.basicauth.users": "admin:$$apr1$$BPTPf0B4$$3FqWbu77zxeFPXVaIDRlq/"
+
     restart_policy: "unless-stopped"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -79,8 +78,7 @@
       - "{{gv.projectlocation}}/traefik/dynamic/:/etc/traefik/dynamic/"
       - "{{gv.projectlocation}}/traefik/log/:/log/"
       - "{{gv.projectlocation}}/traefik/acme.json:/etc/traefik/acme.json"
-      - "{{gv.projectlocation}}/traefik/default.pem:/certs/default.pem:ro"
-      - "{{gv.projectlocation}}/traefik/default.key:/run/secrets/default.key:ro"
+      - "{{gv.projectlocation}}/traefik/certs/:/certs/:ro"
 
 
 

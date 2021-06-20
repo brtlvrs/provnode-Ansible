@@ -1,0 +1,8 @@
+_obj:
+  name: "jaeger"
+
+jaeger:
+  name: "{{_obj.name}}"
+  image:
+    name: "jaegertracing/all-in-one"
+    tag: "latest"
