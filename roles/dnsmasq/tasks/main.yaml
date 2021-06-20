@@ -135,7 +135,7 @@
     - run_only
     - run
   ansible.builtin.git:
-    repo: http://lab.brtlvrs.lab/git/provnode/dnsmasq.git
+    repo: http://git.lab.brtlvrs.lab/provnode/dnsmasq.git
     dest: "{{gv.projectlocation}}/repos/{{_obj.name}}"
     accept_hostkey: yes
     version: master
