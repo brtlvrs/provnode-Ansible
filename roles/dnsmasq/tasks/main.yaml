@@ -135,12 +135,24 @@
     - run_only
     - run
   ansible.builtin.git:
-    repo: http://git.lab.brtlvrs.lab/provnode/dnsmasq.git
-    dest: "{{gv.projectlocation}}/repos/{{_obj.name}}"
+    repo: "http://git.lab.brtlvrs.lab/provnode/{{_obj.name}}.git"
+    dest: "{{gv.projectlocation}}/{{_obj.name}}/git/{{_obj.name}}"
     accept_hostkey: yes
     version: master
     force: yes
 
+- name: git clone tftp
+  tags:
+    - never
+    - git
+    - run_only
+    - run
+  ansible.builtin.git:
+    repo: http://git.lab.brtlvrs.lab/provnode/tftp.git
+    dest: "{{gv.projectlocation}}/{{_obj.name}}/git/tftp"
+    accept_hostkey: yes
+    version: master
+    force: yes
 
 - name: "run container: {{dnsmasq.container.name}} from image:  {{dnsmasq.image.name}}:{{dnsmasq.image.tag}}" 
   tags:
@@ -166,9 +178,8 @@
       "traefik.enabled": "false"
     restart_policy: "unless-stopped"
     volumes: 
-   #   - "dnsmasqconf:/etc/dnsmasq"
-      - "{{gv.projectlocation}}/repos/{{_obj.name}}/dnsmasq.conf:/etc/dnsmasq/dnsmasq.conf"
-      - "{{gv.projectlocation}}/repos/tftp/:/var/lib/tftp/"
+      - "{{gv.projectlocation}}/{{_obj.name}}/git/dnsmasq/dnsmasq.conf:/etc/dnsmasq/dnsmasq.conf"
+      - "{{gv.projectlocation}}/{{_obj.name}}/git/tftp/:/var/lib/tftp/"
       - "{{dnsmasq.container.mountpath}}/dnsmasq.leases:/var/lib/misc/dnsmasq.leases"
  #   volumes_from:
  #     - "data"
