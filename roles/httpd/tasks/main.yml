@@ -119,6 +119,20 @@
     tag: "{{httpd.image.tag}}" 
     push: false
 
+
+- name: git clone config
+  tags:
+    - never
+    - git
+    - run_only
+    - run
+  ansible.builtin.git:
+    repo: http://git.lab.brtlvrs.lab/provnode/httpd_conf.git
+    dest: "{{gv.projectlocation}}/{{_obj.name}}/git/httpd_conf"
+    accept_hostkey: yes
+    version: master
+    force: yes
+
 - name: "run container" 
   tags:
     - never
@@ -154,9 +168,8 @@
       "traefik.http.routers.rtr_apache_conf.middlewares": "mw_apache_conf_01"
       "traefik.http.middlewares.mw_apache_conf_01.stripprefix.prefixes":  "/mgt"
       "traefik.http.services.svc_apache_conf.loadbalancer.server.port": "8080"
-
     volumes:
-      - "{{gv.projectlocation}}/httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf"
+      - "{{gv.projectlocation}}/httpd/git/httpd_conf/httpd.conf:/usr/local/apache2/conf/httpd.conf"
     volumes_from:
       - "{{gv.shareddata.name}}"
 
