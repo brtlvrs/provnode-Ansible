@@ -73,12 +73,12 @@
 
     restart_policy: "unless-stopped"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - "{{gv.projectlocation}}/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro"
-      - "{{gv.projectlocation}}/traefik/dynamic/:/etc/traefik/dynamic/"
+      - /var/run/docker.sock:/var/run/docker.sock #-- needed for docker provider
+      - "{{gv.projectlocation}}/traefik/traefik.yaml:/etc/traefik/traefik.yaml:ro" #-- static traefik configuration
+      - "{{gv.projectlocation}}/traefik/dynamic/:/etc/traefik/dynamic/"  #-- dynamic traefik configuration / file provider
       - "{{gv.projectlocation}}/traefik/log/:/log/"
-      - "{{gv.projectlocation}}/traefik/acme.json:/etc/traefik/acme.json"
-      - "{{gv.projectlocation}}/traefik/certs/:/certs/:ro"
+#      - "{{gv.projectlocation}}/traefik/acme.json:/etc/traefik/acme.json" #-- needed for lets encrypt
+      - "{{gv.projectlocation}}/traefik/certs/:/certs/:ro" #-- certificates
 
 
 
