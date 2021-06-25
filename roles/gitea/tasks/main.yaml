@@ -49,6 +49,8 @@
       USER_UID: "1000"
       USER_GID: "1000"
     state: started
+    ports:
+      - "2222:22"
     recreate: yes
     network_mode: "{{gv.networks.gitea.name}}"
     networks: 
